@@ -31,6 +31,21 @@ class BabelSpeaker ():
             self.neighbours.append(neighbour)
 
         neighbour.receive_hello_from((not unicast_flag), seqno, interval)
+
+    def receive_tlv_ihu(self, sender_address, sender_interface_id, rxcost, interval):
+        
+        sender_interface = self._has_interface(sender_interface_id)
+        if sender_interface == None:
+            sender_interface = Interface(sender_interface_id)
+            self.interfaces.append(sender_interface)
+        
+        #can be optimized? we know there's no neighbour if we just had to make a new interface
+        neighbour = self._has_neighbour(sender_interface,sender_address)
+        if neighbour == None:
+            neighbour = Neighbour(self, sender_interface, sender_address, None, None, None, None, interval)
+            self.neighbours.append(neighbour)
+
+        neighbour.receive_ihu_from(rxcost, interval)
             
 
 
