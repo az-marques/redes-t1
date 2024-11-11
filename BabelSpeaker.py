@@ -73,14 +73,14 @@ class BabelSpeaker ():
                 route.metric = metric
 
                 #and if the advertised metric is not infinite, the route's expiry timer is reset to a small multiple of the interval value included in the update
+                route.expiry_timer.stop()
                 if metric < self.inf:
-                    route.expiry_timer.stop()
                     route.expiry_timer.interval = interval*3.5
-                    route.expiry_timer.start()
+                route.expiry_timer.start()
 
                 #If the update is unfeasible, then the (now unfeasible) entry MUST be immediately unselected.
-                    if not is_feasible:
-                        route.selected = False 
+                if not is_feasible:
+                    route.selected = False 
                 #"If the update caused the router-id of the entry to change, an update (possibly a retraction) MUST be sent in a timely manner as described in Section 3.7.2."
                 #that's what it says in the documentation, but I don't think it's actually possible for router_id to change like this? if it did, then source wouldn't have found the source fo this route, which means this route wouldn't have been found at all
                 
@@ -164,8 +164,14 @@ class BabelSpeaker ():
         route.expiry_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         self.routes.remove(route)
 
+    def flush_source(self, source:Source):
+        source.gc_timer.stop()
+        self.sources.remove(source)
+        # CHECK BACK ON THIS LATER ONCE SENDING UPDATES ARE IMPLEMENTED
+        # SEE HOW WE NEED TO HANDLE ROUTES AFTER A SOURCE IS REMOVED, CAN WE HAVE ROUTES WITH "None" SOURCES?
 
     #returns the most specific currently active route for a given address, or None if there is none
+    #PROBABLY SUCKS FIX LATERs
     def find_route(self, address):
         greatest_match = 0
         greatest_next_hop = None
