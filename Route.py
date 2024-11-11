@@ -14,3 +14,8 @@ class Route():
 
     def compare_index(self, prefix, neighbour) -> bool:
         return prefix == self.source.prefix and neighbour == self.neighbour
+    
+    def compare_address(self, address):
+        if self.source.prefix == address[:len(self.source.prefix)]:
+            return len(self.source.prefix), self.next_hop
+        return 0, None

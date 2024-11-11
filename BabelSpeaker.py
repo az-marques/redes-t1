@@ -1,6 +1,7 @@
 from Neighbour import Neighbour
 from Source import Source
 from Route import Route
+from Interface import Interface
             
 class BabelSpeaker ():
     #node_seqno
@@ -9,10 +10,10 @@ class BabelSpeaker ():
     def __init__(self) -> None:
         #router id??
         self.seqno = 0
-        self.interfaces = []
-        self.neighbours = []
-        self.sources = []
-        self.routes = []
+        self.interfaces = [Interface]
+        self.neighbours = [Neighbour]
+        self.sources = [Source]
+        self.routes = [Route]
     
     def update(self, prefix, neighbour: Neighbour, router_id, seqno, advertised_metric):
         next_hop = neighbour.address #VERY PROBABLY WRONG CHANGE THIS LATER
@@ -70,10 +71,19 @@ class BabelSpeaker ():
         #remove routes too?
 
 
-    #returns the currently active route for a given address
+    #returns the most specific currently active route for a given address, or None if there is none
     def find_route(self, address):
+        greatest_match = 0
+        greatest_next_hop = None
 
-        return
+        for r in self.routes:
+            if r.selected:
+                match, next_hop = r.compare_address(address)
+                if match > greatest_match:
+                    greatest_match = match
+                    greatest_next_hop = next_hop
+        
+        return greatest_next_hop
 
 
 
