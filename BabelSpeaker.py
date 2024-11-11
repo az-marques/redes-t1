@@ -121,8 +121,15 @@ class BabelSpeaker ():
         #trigger route selection
     
     def flush_neighbour(self, neighbour: Neighbour):
+        neighbour.mcast_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
+        neighbour.ucast_timer.stop()
+        neighbour.ihu_timer.stop()
         self.neighbours.remove(neighbour)
         #remove routes too?
+
+    def flush_route(self, route: Route):
+        route.expiry_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
+        self.routes.remove(route)
 
 
     #returns the most specific currently active route for a given address, or None if there is none
