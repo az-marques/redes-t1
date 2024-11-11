@@ -69,17 +69,19 @@ class Neighbour():
             ne = self.ucast_ne
             timer =  self.ucast_timer
 
-        #don't have the modulo stuff in cause that depends on how we even implement seqnos and that's a whole mess
-        #if the two differ by more than 16 (modulo 2^16), then the sending node has probably rebooted and lost its sequence number; the whole associated neighbour table entry is flushed and a new one is created
-        if abs(ne - seqno) > 16:
-            self.flush(True) #but we have to make it re-add itself somehow
-            return
-        #otherwise, if the received seqno nr is smaller (modulo 2^16) than the expected sequence number ne, then the sending node has increased its Hello interval without our noticing; the receiving node removes the last (ne - nr) entries from this neighbour's Hello history (we "undo history");
-        elif seqno < ne:
-            history.shift_right(ne-seqno)
-        #otherwise, if nr is larger (modulo 2^16) than ne, then the sending node has decreased its Hello interval, and some Hellos were lost; the receiving node adds (nr - ne) 0 bits to the Hello history (we "fast-forward").
-        elif seqno > ne:
-            history.shift_left(seqno-ne)
+        #if ne is None then we haven't received this kind of packet from the neighbour yet, so skip this part
+        if ne == None:
+            #don't have the modulo stuff in cause that depends on how we even implement seqnos and that's a whole mess
+            #if the two differ by more than 16 (modulo 2^16), then the sending node has probably rebooted and lost its sequence number; the whole associated neighbour table entry is flushed and a new one is created
+            if abs(ne - seqno) > 16:
+                self.flush(True) #but we have to make it re-add itself somehow
+                return
+            #otherwise, if the received seqno nr is smaller (modulo 2^16) than the expected sequence number ne, then the sending node has increased its Hello interval without our noticing; the receiving node removes the last (ne - nr) entries from this neighbour's Hello history (we "undo history");
+            elif seqno < ne:
+                history.shift_right(ne-seqno)
+            #otherwise, if nr is larger (modulo 2^16) than ne, then the sending node has decreased its Hello interval, and some Hellos were lost; the receiving node adds (nr - ne) 0 bits to the Hello history (we "fast-forward").
+            elif seqno > ne:
+                history.shift_left(seqno-ne)
         
         #add 1 to the end of history (hello received)
         history.shift_left(1)

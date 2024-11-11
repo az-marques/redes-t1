@@ -4,7 +4,6 @@ from Route import Route
 from Interface import Interface
             
 class BabelSpeaker ():
-    #node_seqno
     #pending_seqno_table
     inf = float('inf') #defining this here cause we might want to change it later
     def __init__(self) -> None:
@@ -15,6 +14,27 @@ class BabelSpeaker ():
         self.sources = [Source]
         self.routes = [Route]
     
+    def receive_tlv_hello(self, sender_address, sender_interface_id, unicast_flag, seqno, interval):
+        
+        sender_interface = self._has_interface(sender_interface_id)
+        if sender_interface == None:
+            sender_interface = Interface(sender_interface_id)
+            self.interfaces.append(sender_interface)
+        
+        #can be optimized? we know there's no neighbour if we just had to make a new interface
+        neighbour = self._has_neighbour(sender_interface,sender_address)
+        if neighbour == None:
+            if unicast_flag:
+                neighbour = Neighbour(self, sender_interface, sender_address, None, seqno, None, interval, None)
+            else:
+                neighbour = Neighbour(self, sender_interface, sender_address, seqno, None, interval, None, None)
+            self.neighbours.append(neighbour)
+
+        neighbour.receive_hello_from((not unicast_flag), seqno, interval)
+            
+
+
+
     def update(self, prefix, neighbour: Neighbour, router_id, seqno, advertised_metric):
         next_hop = neighbour.address #VERY PROBABLY WRONG CHANGE THIS LATER
         metric = self._compute_metric(neighbour, next_hop)
@@ -59,6 +79,18 @@ class BabelSpeaker ():
         for s in self.sources:
             if Source(s).compare_index(prefix, router_id):
                 return s
+        return None
+    
+    def _has_interface(self, interface_id):
+        for i in self.interfaces:
+            if i.id == interface_id:
+                return i
+        return None
+
+    def _has_neighbour(self, interface: Interface, address):
+        for n in self.neighbours:
+            if n.interface == interface and n.address == address:
+                return n
         return None
   
     def _add_route(self, source: Source, neighbour: Neighbour, seqno, metric, next_hop):
