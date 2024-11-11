@@ -13,6 +13,10 @@ class BabelSpeaker ():
         self.neighbours = [Neighbour]
         self.sources = [Source]
         self.routes = [Route]
+
+        #store router ID and next hop implied by TLVs for subsequent update TLVs
+        self.tlv_implied_router_id = None
+        self.tlv_implied_next_hop = None
     
     def receive_tlv_hello(self, sender_address, sender_interface_id, unicast_flag, seqno, interval):
         
@@ -47,10 +51,13 @@ class BabelSpeaker ():
 
         neighbour.receive_ihu_from(rxcost, interval)
             
+    def receive_tlv_router_id(self, router_id):
+        self.tlv_implied_router_id = router_id
 
+    def receive_tlv_next_hop(self, next_hop_address):
+        self.tlv_implied_next_hop = next_hop_address
 
-
-    def update(self, prefix, neighbour: Neighbour, router_id, seqno, advertised_metric):
+    def _update(self, prefix, neighbour: Neighbour, router_id, seqno, advertised_metric):
         next_hop = neighbour.address #VERY PROBABLY WRONG CHANGE THIS LATER
         metric = self._compute_metric(neighbour, next_hop)
         r = self._has_route(prefix, neighbour)
