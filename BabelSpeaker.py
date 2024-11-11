@@ -43,7 +43,7 @@ class BabelSpeaker ():
             raise TypeError("Router ID not set by previous TLV")
 
         neighbour = self._neighbour_acquisiton(sender_interface_id, sender_address)
-        source = self._has_source(prefix, plen, self.tlv_implied_router_id) #HANDLE SOURCE ACQUISITON LATER
+        source = self._source_acquisition(prefix, plen, self.tlv_implied_router_id)
         route =  self._has_route(prefix, plen, neighbour)
 
         #metric = self._compute_metric(neighbour, metric) uuuuhhh not sure when this should be run but apparently its not here
@@ -142,8 +142,16 @@ class BabelSpeaker ():
             self.neighbours.append(neighbour)
 
         return neighbour
-
-
+      
+    def _source_acquisition(self, prefix, plen, router_id) -> Source:
+        source = self._has_source(prefix, plen, router_id)
+        
+        if source == None:
+            source = Source(prefix, plen, router_id)
+            self.sources.append(source)
+        
+        return source
+        
     
     def flush_neighbour(self, neighbour: Neighbour):
         neighbour.mcast_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
