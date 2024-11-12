@@ -9,10 +9,10 @@ class BabelSpeaker ():
     def __init__(self) -> None:
         #router id??
         self.seqno = 0
-        self.interfaces = [Interface]
-        self.neighbours = [Neighbour]
-        self.sources = [Source]
-        self.routes = [Route]
+        self.interfaces: list[Interface] =[]
+        self.neighbours: list[Neighbour] =[]
+        self.sources: list[Source] =[]
+        self.routes: list[Route] =[]
 
         #store router ID and next hop implied by TLVs for subsequent update TLVs
         self.tlv_implied_router_id = None
