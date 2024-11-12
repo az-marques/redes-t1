@@ -21,12 +21,6 @@ class Route():
     def compare_index(self, prefix, plen, neighbour) -> bool:
         return prefix == self.source.prefix and self.source.plen and neighbour == self.neighbour
     
-    #gotta improve this, this is just comparing the start of strings. Needs to turn them into binary or at least split off each section, IE right now this returns that "123.123.123.123" matches the prefix "123.1".
-    def compare_address(self, address):
-        if self.source.prefix == address[:len(self.source.prefix)]:
-            return len(self.source.prefix), self.next_hop
-        return 0, None
-    
     def _expiry(self):
         if self.metric < float('inf'): #work out a consistent definition of infinity later
             self.metric = float('inf')

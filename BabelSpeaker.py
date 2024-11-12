@@ -18,6 +18,12 @@ class BabelSpeaker ():
         self.tlv_implied_router_id = None
         self.tlv_implied_next_hop = None
         
+    def receive_tlv_ack_request(self, opaque, interval):
+        pass
+
+    def receive_tlv_ack(self, opaque):
+        pass
+    
     def receive_tlv_hello(self, sender_address, sender_interface_id, unicast_flag, seqno, interval):
         
         neighbour = self._neighbour_acquisiton(sender_interface_id, sender_address)
@@ -97,6 +103,7 @@ class BabelSpeaker ():
         current_route = None
         current_metric_u = self.inf
         current_route_u = None
+
 
         for route in self.routes:
             route.selected == False
@@ -197,7 +204,7 @@ class BabelSpeaker ():
         return source
         
     
-    def flush_neighbour(self, neighbour: Neighbour, readd: Bool):
+    def flush_neighbour(self, neighbour: Neighbour, readd: bool):
         neighbour.mcast_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         neighbour.ucast_timer.stop()
         neighbour.ihu_timer.stop()
@@ -214,20 +221,17 @@ class BabelSpeaker ():
         # CHECK BACK ON THIS LATER ONCE SENDING UPDATES ARE IMPLEMENTED
         # SEE HOW WE NEED TO HANDLE ROUTES AFTER A SOURCE IS REMOVED, CAN WE HAVE ROUTES WITH "None" SOURCES?
 
-    #returns the most specific currently active route for a given address, or None if there is none
-    #PROBABLY SUCKS FIX LATER
+    #given an address, returns the next hop address of the current most specific selected route, or None if there is no route applicable to that address
     def find_route(self, address):
-        greatest_match = 0
-        greatest_next_hop = None
+        best_next_hop_yet = None
+        best_plen_yet = 0
 
         for r in self.routes:
-            if r.selected:
-                match, next_hop = r.compare_address(address)
-                if match > greatest_match:
-                    greatest_match = match
-                    greatest_next_hop = next_hop
-        
-        return greatest_next_hop
+            if r.selected and r.source.compare_address(address) and r.source.plen > best_plen_yet:
+                best_plen_yet = r.source.plen
+                best_next_hop_yet = r.next_hop
+                
+        return best_next_hop_yet
 
 
 
