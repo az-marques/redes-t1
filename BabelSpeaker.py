@@ -87,9 +87,53 @@ class BabelSpeaker ():
                 #After the route table is updated, the route selection procedure is run.
                 self._route_selection()
 
+    #naive route selection algorithm
     def _route_selection(self):
-        #PLACEHOLDER
-        pass
+        y = lambda x : str(x.source.prefix)
+        self.routes.sort(key=y()) #maybe move this to _add_route? sort routes whenever a new one is added
+        
+        current_prefix = self.routes[0].source.prefix
+        current_metric = self.inf
+        current_route = None
+        current_metric_u = self.inf
+        current_route_u = None
+
+        for route in self.routes:
+            route.selected == False
+            if route.source.prefix != current_prefix:
+                #select the best route found for the previous destination
+                if current_route != None and current_metric < self.inf:
+                    current_route.selected == True
+                else:
+                    #DIDN'T FIND A ROUTE FOR THIS ADDRESS, NEED TO REQUEST IT LATER
+                    pass
+
+                #reset for the new destination
+                current_prefix = route.source.prefix
+                current_metric = self.inf
+                current_route = None
+                current_metric_u = self.inf
+                current_route_u = None
+        
+            real_metric = self._compute_metric(route.neighbour, route.metric)
+            #if the route is feasible and has the best metric yet, set it as the current best route
+            if self._is_feasible(route.source, route.seqno, real_metric) and real_metric < current_metric:
+                current_metric = real_metric
+                current_metric_u = min(current_metric_u, current_metric)
+                current_route = route
+            #if it's unfeasible but the best unfeasible route, set it as the best unfeasible route yet
+            elif real_metric < current_metric_u:
+                current_metric_u = real_metric
+                current_route_u = route
+
+        #do this again for the last destination after the loop
+        if current_route != None and current_metric < self.inf:
+            current_route.selected == True
+        else:
+            #DIDN'T FIND A ROUTE FOR THIS ADDRESS, NEED TO REQUEST IT LATER
+            pass
+
+        #after route selection is run, send triggered updates and requests
 
 
     def _compute_metric(self, neighbour: Neighbour, advertised_metric):
@@ -153,7 +197,7 @@ class BabelSpeaker ():
         return source
         
     
-    def flush_neighbour(self, neighbour: Neighbour):
+    def flush_neighbour(self, neighbour: Neighbour, readd: Bool):
         neighbour.mcast_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         neighbour.ucast_timer.stop()
         neighbour.ihu_timer.stop()
@@ -165,13 +209,13 @@ class BabelSpeaker ():
         self.routes.remove(route)
 
     def flush_source(self, source:Source):
-        source.gc_timer.stop()
+        source.gc_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         self.sources.remove(source)
         # CHECK BACK ON THIS LATER ONCE SENDING UPDATES ARE IMPLEMENTED
         # SEE HOW WE NEED TO HANDLE ROUTES AFTER A SOURCE IS REMOVED, CAN WE HAVE ROUTES WITH "None" SOURCES?
 
     #returns the most specific currently active route for a given address, or None if there is none
-    #PROBABLY SUCKS FIX LATERs
+    #PROBABLY SUCKS FIX LATER
     def find_route(self, address):
         greatest_match = 0
         greatest_next_hop = None
