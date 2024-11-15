@@ -52,7 +52,7 @@ class Node:
 
         # Create a packet and add the IHU TLV to it
         babel_pkt = BabelPacket() / iheardyou_tlv
-        babel_pkt.length = len(babel_pkt) - 4  # Length excluding header
+        babel_pkt.length = len(babel_pkt) - 4  # excluding header
 
         # Send the packet to the destination address using the Babel protocol
         sendp(Ether()/IP(dst=destination)/babel_pkt, iface=self.iface, verbose=False)
@@ -78,7 +78,7 @@ class Node:
                 # Send an IHU response for the Hello message
                 self.send_ihu(packet[IP].src, hello.seqno, hello.interval)
 
-            # Check if it's a BabelIHeardYou
+            # Check if it's a BabelIHU
             elif packet.haslayer(BabelIHeardU):
                 ihu = packet[BabelIHeardU]
                 self.babel_speaker.receive_tlv_hello(ihu)
@@ -94,12 +94,9 @@ class Node:
 
 
 def init_node():
-    babel_speaker = BabelHello.BabelSpeaker()  # BabelSpeaker instance
+    babel_speaker = BabelSpeaker.BabelSpeaker()  # BabelSpeaker instance
     node = Node(babel_speaker, iface=NetInterface.getIface())  # JustMininetThings
-
-    # Start sniffing in a separate thread
-    threading.Thread(target=node.start_sniffing, daemon=True).start()
-
+    
     # Periodically send Hello messages
     seqno = 0
     while True:
@@ -110,5 +107,4 @@ def init_node():
         time.sleep(interval / 1000) 
 
 # Run
-if __name__ == "__main__":
-    pass
+init_node()

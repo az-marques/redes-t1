@@ -25,11 +25,6 @@ class BasicTopo(Topo):
 def getIface():
     return ["r-eth1","r-eth2"]
 
-
-# This takes a path and executes it 
-def run_router_program(host, path):
-    host.cmd(f'python3 {path} &')
-
 def run():
     net = Mininet(topo=BasicTopo(), controller=None)
     for _, v in net.nameToNode.items():
@@ -37,15 +32,6 @@ def run():
       v.cmd('ethtool -K '+itf.name+' tx off rx off')
     
     net.start()
-
-    # Path to the Node program script
-    babel_router_program_path = './Node.py'
-    h1 = net.getNodeByName('h1')
-    h2 = net.getNodeByName('h2')
-    # Runs the Node.py program on each host
-    run_router_program(h1, babel_router_program_path)
-    run_router_program(h2, babel_router_program_path)
-
     # command line interface!
     CLI(net)
     net.stop()
