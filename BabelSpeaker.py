@@ -6,8 +6,11 @@ from Interface import Interface
 class BabelSpeaker ():
     #pending_seqno_table
     inf = float('inf') #defining this here cause we might want to change it later
-    def __init__(self) -> None:
-        #router id??
+    def __init__(self, router_id) -> None:
+        #Every Babel speaker is assigned a router-id, which is an arbitrary string of 8 octets that is assumed unique across the routing domain.
+        #For example, router-ids could be assigned randomly, or they could be derived from a link-layer address. 
+        self.router_id = router_id
+        
         self.seqno = 0
         self.interfaces: list[Interface] =[]
         self.neighbours: list[Neighbour] =[]
