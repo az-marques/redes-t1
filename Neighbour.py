@@ -50,7 +50,7 @@ class Neighbour():
             return float('inf') #work out a consistent definition of infinity later
         
     def receive_ihu_from(self, rxcost, interval):
-        self.txcost =  rxcost
+        self.txcost = rxcost
 
         self.ihu_timer.stop()
         self.ihu_timer.interval = interval*1.5
@@ -75,6 +75,7 @@ class Neighbour():
             #if the two differ by more than 16 (modulo 2^16), then the sending node has probably rebooted and lost its sequence number; the whole associated neighbour table entry is flushed and a new one is created
             if abs(ne - seqno) > 16:
                 self.flush(True) #but we have to make it re-add itself somehow
+                self.receive_hello_from(is_multicast, seqno, interval)
                 return
             #otherwise, if the received seqno nr is smaller (modulo 2^16) than the expected sequence number ne, then the sending node has increased its Hello interval without our noticing; the receiving node removes the last (ne - nr) entries from this neighbour's Hello history (we "undo history");
             elif seqno < ne:
@@ -113,4 +114,19 @@ class Neighbour():
         #not empty, keep the timer going
 
     def flush(self, readd: bool):
-        self.speaker.flush_neighbour(self)
+        if readd:
+            self.mcast_timer.stop()
+            self.ucast_timer.stop()
+            self.ihu_timer.stop()
+            self.ucast_timer.interval = None
+            self.mcast_timer.interval = None
+            self.ihu_timer.interval = None
+            
+            self.mcast_hello_hist = BitVector(size=16)
+            self.ucast_hello_hist = BitVector(size=16)
+            self.txcost = float('inf')
+            self.mcast_ne = None
+            self.ucast_ne = None
+            self.ucast_hello_seqno = 0
+        else:
+            self.speaker.flush_neighbour(self)

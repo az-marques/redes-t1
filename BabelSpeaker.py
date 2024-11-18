@@ -207,7 +207,7 @@ class BabelSpeaker ():
         return source
         
     
-    def flush_neighbour(self, neighbour: Neighbour, readd: bool):
+    def flush_neighbour(self, neighbour: Neighbour):
         neighbour.mcast_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         neighbour.ucast_timer.stop()
         neighbour.ihu_timer.stop()
