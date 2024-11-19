@@ -15,6 +15,9 @@ class Route():
 
         self.expiry_timer = RepeatedTimer(interval*3.5, self._expiry, [self])
 
+    def __lt__(self, other) -> bool:
+        return self.source < other.source
+
     def index(self):
         return self.source.prefix, self.source.plen, self.neighbour
 

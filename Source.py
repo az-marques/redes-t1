@@ -21,6 +21,9 @@ class Source():
         self.gc_timer = RepeatedTimer(180, speaker.flush_source, [self])
         self.gc_timer.start()
 
+    def __lt__(self, other) -> bool:
+        return self.prefix < other.prefix
+
     def index(self):
         return self.prefix, self.plen, self.router_id
     def compare_index(self, prefix, plen, router_id) -> bool:
