@@ -104,19 +104,27 @@ class BabelSpeaker ():
         current_prefix = self.routes[0].source.prefix
         current_metric = self.inf
         current_route = None
+        previous_route = None
         current_metric_u = self.inf
         current_route_u = None
+        send_updates: list[Route] =[]
+        send_requests = []
 
 
         for route in self.routes:
+            if route.selected == True:
+                previous_route = route
             route.selected == False
             if route.source.prefix != current_prefix:
                 #select the best route found for the previous destination
                 if current_route != None and current_metric < self.inf:
                     current_route.selected == True
+                    #ROUTER ID CHANGE, NEED TO SEND AN UPDATE
+                    if previous_route != None and current_route.source.router_id != previous_route.source.router_id:
+                        send_updates.append(current_route)
                 else:
                     #DIDN'T FIND A ROUTE FOR THIS ADDRESS, NEED TO REQUEST IT LATER
-                    pass
+                    send_requests.append(current_prefix, current_route_u, previous_route)
 
                 #reset for the new destination
                 current_prefix = route.source.prefix
@@ -124,6 +132,7 @@ class BabelSpeaker ():
                 current_route = None
                 current_metric_u = self.inf
                 current_route_u = None
+                previous_route = None
         
             real_metric = self._compute_metric(route.neighbour, route.metric)
             #if the route is feasible and has the best metric yet, set it as the current best route
@@ -139,9 +148,12 @@ class BabelSpeaker ():
         #do this again for the last destination after the loop
         if current_route != None and current_metric < self.inf:
             current_route.selected == True
+            #ROUTER ID CHANGE, NEED TO SEND AN UPDATE
+            if previous_route != None and current_route.source.router_id != previous_route.source.router_id:
+                send_updates.append(current_route)
         else:
             #DIDN'T FIND A ROUTE FOR THIS ADDRESS, NEED TO REQUEST IT LATER
-            pass
+            send_requests.append(current_prefix, current_route_u, previous_route)
 
         #after route selection is run, send triggered updates and requests
 
