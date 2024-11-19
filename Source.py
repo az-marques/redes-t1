@@ -22,7 +22,12 @@ class Source():
         self.gc_timer.start()
 
     def __lt__(self, other) -> bool:
-        return self.prefix < other.prefix
+        if self.prefix < other.prefix:
+            return True
+        elif self.prefix == other.prefix:
+            return self.router_id < other.router_id
+        else:
+            return False
 
     def index(self):
         return self.prefix, self.plen, self.router_id
