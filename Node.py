@@ -36,6 +36,18 @@ class Node:
         self.babel_speaker = babel_speaker # Speaker as defined in BabelSpeaker.py
         self.iface = iface # Network interface
 
+    def send_next_hop_m(self, interface, next_hop):
+        #placeholder, send multicast next_hop TLV to all addresses connected to that interface
+        pass
+
+    def send_router_id_m(self, interface, router_id):
+        #placeholder, send multicast router_id TLV to all addresses connected to that interface
+        pass
+
+    def send_update_m(self, interface, route_plen, route_prefix, interval, route_seqno, route_metric, flags):
+        #placeholder, send multicast update TLV to all addresses connected to that interface
+        pass
+
     def send_hello(self, destination, seqno, interval):
         hello_tlv = BabelHello(seqno=seqno, interval=interval)
 

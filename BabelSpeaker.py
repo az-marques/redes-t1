@@ -2,6 +2,7 @@ from Neighbour import Neighbour
 from Source import Source
 from Route import Route
 from Interface import Interface
+import Node
             
 class BabelSpeaker ():
     #pending_seqno_table
@@ -20,6 +21,11 @@ class BabelSpeaker ():
         #store router ID and next hop implied by TLVs for subsequent update TLVs
         self.tlv_implied_router_id = None
         self.tlv_implied_next_hop = None
+
+        self._node = None
+    
+    def set_node(self, node: Node.Node):
+        self._node = node
         
     def receive_tlv_ack_request(self, opaque, interval):
         pass
@@ -156,6 +162,64 @@ class BabelSpeaker ():
             send_requests.append(current_prefix, current_route_u, previous_route)
 
         #after route selection is run, send triggered updates and requests
+        self._triggered_updates(send_updates)
+
+    def _triggered_updates(self, routes_to_update: list[Route]):
+        if not routes_to_update:
+            return
+        
+        routes_to_update.sort() #might not be necessary? given that route selection has created this list from a sorted list
+
+        for interface in self.interfaces:
+            current_prefix = routes_to_update[0].source.prefix
+            current_router_id = routes_to_update[0].source.router_id
+            current_next_hop =  routes_to_update[0].next_hop
+            prefix_flag = True
+
+            self._node.send_router_id_m(interface.id, current_router_id)
+            self._node.send_next_hop_m(interface.id, current_next_hop)
+            
+            for route in routes_to_update:
+                if route.source.router_id != current_router_id:
+                    current_router_id = route.source.router_id
+                    self._node.send_router_id_m(interface.id, current_router_id)
+                
+                if route.next_hop != current_next_hop:
+                    current_next_hop = route.next_hop
+                    self._node.send_next_hop_m(interface.id, current_next_hop)
+
+                if route.source.prefix != current_prefix:
+                    current_prefix = route.source.prefix
+                    prefix_flag = False
+
+                if self._is_route_self_injected(route):
+                    seqno = self.seqno
+                    metric = 0
+                    self._node.send_update_m(interface.id, route.source.plen, route.source.prefix, self.inf, self.seqno, 0, (prefix_flag, False))
+                else:
+                    seqno = route.seqno
+                    metric = self._compute_metric(route.neighbour, route.metric)
+
+                self._update_fd(route.source, seqno, metric)
+                self._node.send_update_m(interface.id, route.source.plen, route.source.prefix, self.inf, seqno, metric, (prefix_flag, False))
+
+                prefix_flag = False
+
+    def _update_fd(self, source: Source, new_seqno, new_metric):
+        if new_seqno > source.f_seqno:
+            source.f_seqno = new_seqno
+            source.f_metric = new_metric
+        elif new_seqno == source.f_seqno and new_metric < source.f_metric:
+            source.f_metric = new_metric
+        else:
+            #if we were implementing source GC this is when we'd reset the timer
+            pass
+
+    def _is_route_self_injected(self, route: Route) -> bool:
+        #Placeholder
+        #"If an update is for a route injected into the Babel domain by the local node (e.g., it carries the address of a local interface, the prefix of a directly attached network, or a prefix redistributed from a different routing protocol)"
+        #not sure how to test for that, aside from the interface thing
+        return False
 
 
     def _compute_metric(self, neighbour: Neighbour, advertised_metric):
@@ -229,12 +293,6 @@ class BabelSpeaker ():
     def flush_route(self, route: Route):
         route.expiry_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
         self.routes.remove(route)
-
-    def flush_source(self, source:Source):
-        source.gc_timer.stop() #...I'm honestly not sure if we need to stop the timers but better safe than sorry?
-        self.sources.remove(source)
-        # CHECK BACK ON THIS LATER ONCE SENDING UPDATES ARE IMPLEMENTED
-        # SEE HOW WE NEED TO HANDLE ROUTES AFTER A SOURCE IS REMOVED, CAN WE HAVE ROUTES WITH "None" SOURCES?
 
     #given an address, returns the next hop address of the current most specific selected route, or None if there is no route applicable to that address
     def find_route(self, address):

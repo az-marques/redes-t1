@@ -18,8 +18,9 @@ class Source():
         self.f_seqno
         self.f_metric
         
-        self.gc_timer = RepeatedTimer(180, speaker.flush_source, [self])
-        self.gc_timer.start()
+        #don't believe we need to implement source gc since python already has its own garbage collection
+        #self.gc_timer = RepeatedTimer(180, speaker.flush_source, [self])
+        #self.gc_timer.start()
 
     def __lt__(self, other) -> bool:
         if self.prefix < other.prefix:
